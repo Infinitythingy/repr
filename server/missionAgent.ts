@@ -138,7 +138,7 @@ function buildDeterministicPlan(input: MissionRequest): MissionPlan {
       id: 'gitlab-sync',
       name: 'Create GitLab execution lane',
       objective:
-        'Create labels, milestone, issue drafts, and owner assignments through the GitLab MCP action layer.',
+        'Create labels, Day 1/Day 2 milestones, issue drafts, and owner assignments through the GitLab MCP action layer.',
       window: input.urgency === 'critical' ? 'T+6-8h' : `${windowPrefix}1`,
       owner: 'MissionOps agent',
       exitCriteria: 'All work items are visible with due dates and labels',
@@ -302,7 +302,7 @@ function buildDeterministicPlan(input: MissionRequest): MissionPlan {
     {
       tool: 'create_milestone',
       target: title,
-      payloadSummary: 'Create a mission milestone for due dates and reporting',
+      payloadSummary: 'Create dated mission milestones for Day 1/Day 2 execution',
     },
     ...issues.map((issue) => ({
       tool: 'create_issue',

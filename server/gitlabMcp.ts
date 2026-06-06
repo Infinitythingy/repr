@@ -16,6 +16,92 @@ type McpTool = {
   }
 }
 
+type LabelDefinition = {
+  name: string
+  color: string
+  description: string
+}
+
+type MilestoneDefinition = {
+  window: string
+  title: string
+  description: string
+  dueDate?: string
+}
+
+const LABEL_CATALOG: Record<string, LabelDefinition> = {
+  missionops: {
+    name: 'missionops',
+    color: '#0f766e',
+    description: 'MissionOps agent generated work item',
+  },
+  approval: {
+    name: 'approval',
+    color: '#f59e0b',
+    description: 'Requires explicit human approval or sign-off evidence',
+  },
+  'finance-ops': {
+    name: 'finance-ops',
+    color: '#14b8a6',
+    description: 'Finance operations owned work',
+  },
+  evidence: {
+    name: 'evidence',
+    color: '#2563eb',
+    description: 'Requires audit evidence or source artifact links',
+  },
+  reconciliation: {
+    name: 'reconciliation',
+    color: '#6366f1',
+    description: 'Reconciliation, matching, or variance review',
+  },
+  exceptions: {
+    name: 'exceptions',
+    color: '#f97316',
+    description: 'Exception triage and remediation queue',
+  },
+  'priority-high': {
+    name: 'priority-high',
+    color: '#dc2626',
+    description: 'High priority work item',
+  },
+  'priority-critical': {
+    name: 'priority-critical',
+    color: '#991b1b',
+    description: 'Critical priority work item',
+  },
+  'priority-normal': {
+    name: 'priority-normal',
+    color: '#64748b',
+    description: 'Normal priority work item',
+  },
+  'data-fix': {
+    name: 'data-fix',
+    color: '#7c3aed',
+    description: 'Controlled data correction work',
+  },
+  control: {
+    name: 'control',
+    color: '#059669',
+    description: 'Risk control or approval guardrail',
+  },
+  reporting: {
+    name: 'reporting',
+    color: '#0891b2',
+    description: 'Status reporting and stakeholder communication',
+  },
+  exec: {
+    name: 'exec',
+    color: '#334155',
+    description: 'Executive-facing deliverable',
+  },
+  'audit-pack': {
+    name: 'audit-pack',
+    color: '#9333ea',
+    description: 'Audit package assembly and evidence archive',
+  },
+}
+
 export async function executeGitLabMission(
   plan: MissionPlan,
 ): Promise<McpExecutionLog> {
@@ -83,24 +169,29 @@ async function withTimeout<T>(promise: Promise<T>, timeoutMs: number): Promise<T
 }
 
 function simulateActions(plan: MissionPlan): McpActionResult[] {
+  const labels = labelDefinitionsFor(plan)
+  const milestones = milestoneDefinitionsFor(plan)
+
   const labelAction: McpActionResult = {
     id: 'sim-labels',
-    title: 'Prepared MissionOps labels',
-    detail: 'missionops, evidence, reporting, control, and priority labels queued',
+    title: 'Prepared color-coded MissionOps labels',
+    detail: labels
+      .map((label) => `${label.name} ${label.color}`)
+      .join(', '),
     status: 'simulated',
   }
 
-  const milestoneAction: McpActionResult = {
-    id: 'sim-milestone',
-    title: `Prepared milestone: ${plan.title}`,
-    detail: 'Milestone links ticket due dates to executive reporting cadence',
-    status: 'simulated',
-  }
+  const milestoneActions = milestones.map((milestone) => ({
+    id: `sim-milestone-${slugify(milestone.window)}`,
+    title: `Prepared milestone: ${milestone.title}`,
+    detail: `${milestone.window} due ${milestone.dueDate ?? 'TBD'}; links issue due dates to the demo timeline`,
+    status: 'simulated' as const,
+  }))
 
   const issueActions = plan.gitlabIssues.map((issue, index) => ({
     id: `sim-issue-${index + 1}`,
     title: `Drafted issue: ${issue.title}`,
-    detail: `${issue.owner}; due ${issue.dueDate}; labels ${issue.labels.join(', ')}`,
+    detail: `${issue.owner}; due ${issue.dueDate}; milestone ${milestoneForIssue(plan, issue)?.title ?? 'unmapped'}; labels ${issue.labels.join(', ')}`,
     status: 'simulated' as const,
   }))
 
@@ -111,7 +202,7 @@ function simulateActions(plan: MissionPlan): McpActionResult[] {
     status: 'simulated',
   }
 
-  return [labelAction, milestoneAction, ...issueActions, reportAction]
+  return [labelAction, ...milestoneActions, ...issueActions, reportAction]
 }
 
 async function executeLiveMcp(
@@ -146,39 +237,46 @@ async function executeLiveMcp(
     ]
 
     if (createLabelTool) {
-      const raw = await client.callTool({
-        name: createLabelTool.name,
-        arguments: shapeGenericArgs(createLabelTool, {
-          name: 'missionops',
-          color: '#0f766e',
-          description: 'MissionOps agent generated work item',
-        }),
-      })
-      actions.push({
-        id: 'labels-created',
-        title: 'Created MissionOps label',
-        detail: createLabelTool.name,
-        status: 'completed',
-        raw,
-      })
+      for (const label of labelDefinitionsFor(plan)) {
+        const raw = await client.callTool({
+          name: createLabelTool.name,
+          arguments: shapeGenericArgs(createLabelTool, {
+            name: label.name,
+            label: label.name,
+            color: label.color,
+            description: label.description,
+          }),
+        })
+        actions.push({
+          id: `label-created-${slugify(label.name)}`,
+          title: `Created color-coded label: ${label.name}`,
+          detail: `${label.color} via ${createLabelTool.name}`,
+          status: 'completed',
+          raw,
+        })
+      }
     }
 
     if (createMilestoneTool) {
-      const raw = await client.callTool({
-        name: createMilestoneTool.name,
-        arguments: shapeGenericArgs(createMilestoneTool, {
-          title: plan.title,
-          description: plan.executiveBrief,
-          due_date: plan.gitlabIssues.at(-1)?.dueDate,
-        }),
-      })
-      actions.push({
-        id: 'milestone-created',
-        title: 'Created mission milestone',
-        detail: createMilestoneTool.name,
-        status: 'completed',
-        raw,
-      })
+      for (const milestone of milestoneDefinitionsFor(plan)) {
+        const raw = await client.callTool({
+          name: createMilestoneTool.name,
+          arguments: shapeGenericArgs(createMilestoneTool, {
+            title: milestone.title,
+            name: milestone.title,
+            description: milestone.description,
+            due_date: milestone.dueDate,
+            dueDate: milestone.dueDate,
+          }),
+        })
+        actions.push({
+          id: `milestone-created-${slugify(milestone.window)}`,
+          title: `Created milestone: ${milestone.title}`,
+          detail: `${milestone.window} due ${milestone.dueDate ?? 'TBD'} via ${createMilestoneTool.name}`,
+          status: 'completed',
+          raw,
+        })
+      }
     }
 
     if (!createIssueTool) {
@@ -217,6 +315,8 @@ function shapeIssueArgs(
   issue: GitLabIssueDraft,
   plan: MissionPlan,
 ): Record<string, unknown> {
+  const milestone = milestoneForIssue(plan, issue)
+
   return shapeGenericArgs(tool, {
     id: process.env.GITLAB_PROJECT_ID,
     project_id: process.env.GITLAB_PROJECT_ID,
@@ -226,6 +326,10 @@ function shapeIssueArgs(
     labels: issue.labels,
     label_names: issue.labels,
     due_date: issue.dueDate,
+    dueDate: issue.dueDate,
+    milestone: milestone?.title,
+    milestone_title: milestone?.title,
+    milestone_name: milestone?.title,
   })
 }
 
@@ -246,17 +350,115 @@ function shapeGenericArgs(
     if (lower.includes('project') && process.env.GITLAB_PROJECT_ID) {
       shaped[key] = process.env.GITLAB_PROJECT_ID
     }
+    if (lower === 'name') {
+      shaped[key] = candidates.name ?? candidates.title
+    }
+    if (lower === 'title') {
+      shaped[key] = candidates.title ?? candidates.name
+    }
+    if (lower === 'color') {
+      shaped[key] = candidates.color
+    }
     if (lower === 'body' || lower.includes('description')) {
       shaped[key] = candidates.description
     }
     if (lower.includes('label')) {
-      shaped[key] = candidates.labels ?? candidates.name
+      shaped[key] = candidates.labels ?? candidates.label ?? candidates.name
     }
     if (lower.includes('due')) {
       shaped[key] = candidates.due_date
     }
+    if (lower.includes('milestone') && !lower.includes('id')) {
+      shaped[key] =
+        candidates.milestone ?? candidates.milestone_title ?? candidates.milestone_name
+    }
   }
   return shaped
+}
+
+function labelDefinitionsFor(plan: MissionPlan): LabelDefinition[] {
+  const names = new Set<string>(['missionops'])
+  for (const issue of plan.gitlabIssues) {
+    for (const label of issue.labels) {
+      names.add(label)
+    }
+  }
+
+  return [...names].map((name) => LABEL_CATALOG[name] ?? fallbackLabel(name))
+}
+
+function fallbackLabel(name: string): LabelDefinition {
+  return {
+    name,
+    color: deterministicColor(name),
+    description: `MissionOps generated label: ${name}`,
+  }
+}
+
+function deterministicColor(value: string): string {
+  const colors = ['#0f766e', '#2563eb', '#7c3aed', '#dc2626', '#0891b2']
+  const total = [...value].reduce((sum, char) => sum + char.charCodeAt(0), 0)
+  return colors[total % colors.length]
+}
+
+function milestoneDefinitionsFor(plan: MissionPlan): MilestoneDefinition[] {
+  const windows = new Map<string, MilestoneDefinition>()
+  for (const issue of plan.gitlabIssues) {
+    const window = dayWindowForIssue(plan, issue)
+    if (!window) continue
+
+    windows.set(window, {
+      window,
+      title: `${plan.title} - ${window}`,
+      description: `${window} MissionOps work for ${plan.missionId}. Issues in this milestone share due dates, owners, labels, and audit evidence expectations.`,
+      dueDate: issue.dueDate,
+    })
+  }
+
+  return [...windows.values()].sort((left, right) => {
+    return dayNumber(left.window) - dayNumber(right.window)
+  })
+}
+
+function milestoneForIssue(
+  plan: MissionPlan,
+  issue: GitLabIssueDraft,
+): MilestoneDefinition | undefined {
+  const window = dayWindowForIssue(plan, issue)
+  return milestoneDefinitionsFor(plan).find((milestone) => milestone.window === window)
+}
+
+function dayWindowForIssue(
+  plan: MissionPlan,
+  issue: GitLabIssueDraft,
+): string | undefined {
+  const createdAt = new Date(plan.createdAt)
+  const dueDate = new Date(`${issue.dueDate}T00:00:00.000Z`)
+  if (Number.isNaN(createdAt.getTime()) || Number.isNaN(dueDate.getTime())) {
+    return undefined
+  }
+
+  const createdDay = Date.UTC(
+    createdAt.getUTCFullYear(),
+    createdAt.getUTCMonth(),
+    createdAt.getUTCDate(),
+  )
+  const dueDay = Date.UTC(
+    dueDate.getUTCFullYear(),
+    dueDate.getUTCMonth(),
+    dueDate.getUTCDate(),
+  )
+  const offset = Math.max(1, Math.round((dueDay - createdDay) / 86_400_000))
+  return `Day ${offset}`
+}
+
+function dayNumber(window: string): number {
+  const match = window.match(/\d+/)
+  return match ? Number(match[0]) : Number.MAX_SAFE_INTEGER
+}
+
+function slugify(value: string): string {
+  return value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
 }
 
 function splitArgs(value: string): string[] {

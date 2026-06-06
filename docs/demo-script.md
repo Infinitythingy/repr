@@ -25,7 +25,9 @@ Mention that with `GEMINI_API_KEY`, the planning path uses Gemini 3. Without cre
 
 ## 1:35-2:20 - Partner MCP Execution
 
-Click **Approve & sync**. Explain that the GitLab MCP adapter discovers tools and creates labels, milestones, and issues in live mode. In demo mode it records the exact action trail without writing to an external project.
+Click **Approve & sync**. Explain that the GitLab MCP adapter discovers tools and creates color-coded labels, Day 1/Day 2 milestones, and issues in live mode. In demo mode it records the same action trail without writing to an external project.
+
+For the strongest sponsor proof, record this segment from a local run configured with a sandbox GitLab project. After the approval click, cut to the GitLab repository and show the newly created issues, label colors, and milestones.
 
 ## 2:20-2:50 - Why It Wins
 

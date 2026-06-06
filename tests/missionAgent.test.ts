@@ -63,6 +63,27 @@ describe('MissionOps API', () => {
 
     expect(executionResponse.body.execution.mode).toBe('Simulated MCP')
     expect(executionResponse.body.execution.actions.length).toBeGreaterThan(5)
+    expect(
+      executionResponse.body.execution.actions.some(
+        (action: { title: string; detail: string }) =>
+          action.title.includes('color-coded') &&
+          action.detail.includes('missionops #0f766e'),
+      ),
+    ).toBe(true)
+    expect(
+      executionResponse.body.execution.actions.some(
+        (action: { title: string }) =>
+          action.title.includes('Prepared milestone') &&
+          action.title.includes('Day 1'),
+      ),
+    ).toBe(true)
+    expect(
+      executionResponse.body.execution.actions.some(
+        (action: { title: string }) =>
+          action.title.includes('Prepared milestone') &&
+          action.title.includes('Day 2'),
+      ),
+    ).toBe(true)
   })
 
   it('flags corrupted grounding rows instead of crashing or ignoring dirty data', async () => {
