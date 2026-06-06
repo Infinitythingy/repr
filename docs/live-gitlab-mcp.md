@@ -32,7 +32,7 @@ Use the least-privileged token that can create issues, labels, milestones, and c
 
 ## Safe Demo Strategy
 
-Use demo mode in the video if credentials are unavailable. Narrate that the same action list becomes live writes when `GITLAB_MCP_COMMAND` and project credentials are configured.
+Use demo mode in the video if credentials are unavailable. Add an on-screen caption that the same action list becomes live writes when `GITLAB_MCP_COMMAND` and project credentials are configured.
 
 For the strongest live sponsor demo:
 

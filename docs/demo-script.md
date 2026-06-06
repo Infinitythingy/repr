@@ -8,7 +8,7 @@ Finance and operations teams often run urgent workflows across spreadsheets, ERP
 
 ## 0:20-0:50 - Agent Setup
 
-Show MissionOps Agent. Select the default quarter-close mission or the fraud surge preset. Point out the connected systems, urgency, and control constraints.
+Show MissionOps Agent. Select the default quarter-close mission or the fraud surge preset. Use captions to call out the connected systems, urgency, and control constraints.
 
 ## 0:50-1:35 - Multi-Step Planning
 
@@ -21,11 +21,11 @@ Click **Plan mission**. The agent produces:
 - report pack
 - MCP action plan
 
-Mention that with `GEMINI_API_KEY`, the planning path uses Gemini 3. Without credentials, the app runs a deterministic judge-friendly demo.
+Caption that with `GEMINI_API_KEY`, the planning path uses Gemini 3. Without credentials, the app runs a deterministic judge-friendly demo.
 
 ## 1:35-2:20 - Partner MCP Execution
 
-Click **Approve & sync**. Explain that the GitLab MCP adapter discovers tools and creates color-coded labels, Day 1/Day 2 milestones, and issues in live mode. In demo mode it records the same action trail without writing to an external project.
+Click **Approve & sync**. Use captions to explain that the GitLab MCP adapter discovers tools and creates color-coded labels, Day 1/Day 2 milestones, and issues in live mode. In demo mode it records the same action trail without writing to an external project.
 
 For the strongest sponsor proof, record this segment from a local run configured with a sandbox GitLab project. After the approval click, cut to the GitLab repository and show the newly created issues, label colors, and milestones.
 

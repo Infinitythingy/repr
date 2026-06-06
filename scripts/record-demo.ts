@@ -59,8 +59,20 @@ await caption(
 
 await page.getByRole('button', { name: /Approve & sync/i }).click()
 await page.getByText('Simulated MCP').waitFor({ timeout: 30_000 })
+await scrollToText('Prepared color-coded MissionOps labels')
 await caption(
-  'In demo mode, MissionOps records the exact MCP action trail. With GitLab MCP credentials, the same adapter creates live labels, milestones, and issues.',
+  'The sync trail now prepares color-coded GitLab labels such as missionops #0f766e, evidence #2563eb, and approval #f59e0b.',
+  11000,
+)
+
+await scrollToText('Prepared milestone')
+await caption(
+  'It also maps the execution timeline into dated GitLab milestones, including Day 1 and Day 2, before drafting the issues.',
+  11000,
+)
+
+await caption(
+  'With live GitLab MCP credentials, these same approved actions create real labels, milestones, and issues in the sponsor repository.',
   13000,
 )
 
