@@ -20,7 +20,12 @@ export default defineConfig([
     },
   },
   {
-    files: ['server/**/*.ts', 'tests/**/*.ts', 'playwright.config.ts'],
+    files: [
+      'server/**/*.ts',
+      'netlify/**/*.ts',
+      'tests/**/*.ts',
+      'playwright.config.ts',
+    ],
     languageOptions: {
       globals: {
         ...globals.browser,

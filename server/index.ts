@@ -52,7 +52,11 @@ if (process.env.NODE_ENV === 'production' && existsSync(distDir)) {
   })
 }
 
-if (!process.env.VITEST) {
+const isDirectRun =
+  process.argv[1] !== undefined &&
+  fileURLToPath(import.meta.url) === process.argv[1]
+
+if (isDirectRun) {
   const port = Number(process.env.PORT ?? 8787)
   app.listen(port, () => {
     console.log(`MissionOps API listening on http://127.0.0.1:${port}`)

@@ -114,7 +114,9 @@ General path:
 3. Set the same environment variables on the host.
 4. Paste the hosted app URL into Devpost.
 
-For a static-only preview host, deploy the Vite build and keep the API on a Node/Cloud Run service, then set a reverse proxy for `/api`.
+Netlify path:
+
+This repo also includes `netlify.toml` and `netlify/functions/api.ts`, so Netlify can serve the Vite front end and route `/api/*` through a serverless function.
 
 ## Prize Demo Flow
 
