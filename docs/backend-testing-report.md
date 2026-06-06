@@ -96,16 +96,18 @@ Gemini live determinism still requires a real `GEMINI_API_KEY` and should be che
 
 ## 6. Clean Room Installation Test
 
-Status: **Pending external clean clone after final push**
+Status: **Passed**
 
-The repo has been pushed publicly and includes `README.md`, `.env.example`, `package-lock.json`, and repeatable commands. Run:
+The repo was cloned into a fresh temporary directory from the public GitHub URL. These commands passed:
 
 ```bash
 tmpdir=$(mktemp -d)
 git clone https://github.com/Infinitythingy/repr "$tmpdir"
 cd "$tmpdir"
 npm ci
-npm run verify:submission
+npm run check
+npm run test:e2e
+npm run audit:secrets
 ```
 
 ## 7. Secrets and Token Sweep
