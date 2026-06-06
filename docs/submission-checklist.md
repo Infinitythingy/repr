@@ -43,6 +43,7 @@
 
 ```bash
 npm run verify:submission
+npm run test:e2e:hosted
 ```
 
 Expected result:
@@ -51,3 +52,4 @@ Expected result:
 - Vitest passes
 - Production build passes
 - Playwright desktop and mobile flows pass
+- Hosted Playwright flow passes against Netlify

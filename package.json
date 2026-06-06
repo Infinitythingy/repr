@@ -16,6 +16,7 @@
     "start": "NODE_ENV=production tsx server/index.ts",
     "test": "vitest run",
     "test:e2e": "playwright test",
+    "test:e2e:hosted": "PLAYWRIGHT_BASE_URL=https://missionops-agent.netlify.app playwright test",
     "check": "npm run lint && npm run test && npm run build",
     "verify:submission": "npm run check && npm run test:e2e"
   },
