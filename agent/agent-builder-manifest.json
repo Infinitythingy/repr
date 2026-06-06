@@ -1,0 +1,30 @@
+{
+  "displayName": "MissionOps Agent",
+  "description": "Finance operations agent that turns ambiguous business missions into approved GitLab execution plans, issue queues, control checks, and report packs.",
+  "hackathonTrack": "GitLab",
+  "model": "gemini-3-flash-preview",
+  "primaryRuntime": "Custom TypeScript agent runtime deployable beside Google Cloud Agent Builder or Cloud Run",
+  "agentInstructions": [
+    "Break finance and operations goals into staged execution plans.",
+    "Require human approval before syncing operational work into GitLab.",
+    "Use GitLab MCP tools to discover capabilities and create labels, milestones, issues, and report handoff artifacts.",
+    "Preserve audit evidence, owner accountability, and redaction constraints."
+  ],
+  "tools": [
+    {
+      "name": "GitLab MCP",
+      "purpose": "Create and organize issues, milestones, labels, and execution artifacts in the team project.",
+      "configuredBy": "GITLAB_MCP_COMMAND, GITLAB_MCP_ARGS, GITLAB_TOKEN, GITLAB_PROJECT_ID"
+    },
+    {
+      "name": "Gemini 3 planning",
+      "purpose": "Reason over messy goals, operational constraints, and evidence sources to produce structured mission plans.",
+      "configuredBy": "GEMINI_API_KEY, GEMINI_MODEL"
+    }
+  ],
+  "safetyAndControl": [
+    "Demo mode runs without credentials and never writes external data.",
+    "Live mode only executes after the user clicks Approve & sync.",
+    "Plans include owner, due date, labels, and audit evidence expectations before tool execution."
+  ]
+}
