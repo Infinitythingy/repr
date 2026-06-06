@@ -1,4 +1,5 @@
 import type { MissionPlan, MissionRequest } from '../../src/shared/mission'
+import { analyzeGroundingData, groundingPromptDigest } from '../grounding'
 
 type GeminiGenerateResponse = {
   candidates?: Array<{
@@ -31,7 +32,7 @@ export async function generatePlanWithGemini(
       ],
       generationConfig: {
         responseMimeType: 'application/json',
-        temperature: 0.25,
+        temperature: 0.1,
       },
     }),
   })
@@ -65,6 +66,9 @@ Data sources: ${input.dataSources.join(', ')}
 Constraints:
 ${input.constraints.map((constraint) => `- ${constraint}`).join('\n')}
 
+Grounding data digest:
+${groundingPromptDigest(analyzeGroundingData(input.groundingData))}
+
 Return only JSON matching this TypeScript shape:
 {
   "title": string,
@@ -77,7 +81,8 @@ Return only JSON matching this TypeScript shape:
   "reports": [{"title": string, "audience": string, "format": "Exec memo" | "Audit pack" | "Ops digest", "sections": string[]}],
   "controls": [{"name": string, "owner": string, "evidence": string, "risk": "Low" | "Medium" | "High"}],
   "mcpActions": [{"tool": string, "target": string, "payloadSummary": string}],
-  "agentTrace": string[]
+  "agentTrace": string[],
+  "groundingSummary": {"filesAnalyzed": number, "totalRows": number, "processedRows": number, "truncatedRows": number, "anomalies": [{"id": string, "severity": "Low" | "Medium" | "High", "source": string, "rowNumber": number, "message": string}]}
 }
 Make it prize-demo quality, specific, finance-safe, and GitLab-native.
 `

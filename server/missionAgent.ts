@@ -8,6 +8,12 @@ import type {
   MissionStage,
   ReportDraft,
 } from '../src/shared/mission'
+import {
+  analyzeGroundingData,
+  groundingDataSchema,
+  groundingPromptDigest,
+  groundingRiskAdjustment,
+} from './grounding'
 import { generatePlanWithGemini } from './providers/gemini'
 
 const dataSourceSchema = z.enum([
@@ -26,6 +32,7 @@ export const missionRequestSchema = z.object({
   approvalMode: z.enum(['manual', 'two_person', 'auto_draft']),
   dataSources: z.array(dataSourceSchema).min(1),
   constraints: z.array(z.string().trim().min(3).max(240)).max(8),
+  groundingData: z.array(groundingDataSchema).max(4).optional(),
 })
 
 export async function createMissionPlan(
@@ -34,16 +41,17 @@ export async function createMissionPlan(
   if (process.env.GEMINI_API_KEY) {
     const generated = await generatePlanWithGemini(input).catch(() => null)
     if (generated) {
-      return normalizePlan(generated, 'gemini')
+      return normalizePlan(generated, 'gemini', input)
     }
   }
 
-  return normalizePlan(buildDeterministicPlan(input), 'deterministic')
+  return normalizePlan(buildDeterministicPlan(input), 'deterministic', input)
 }
 
 function normalizePlan(
   partialPlan: Partial<MissionPlan>,
   agentMode: MissionPlan['agentMode'],
+  sourceInput?: MissionRequest,
 ): MissionPlan {
   const fallback = buildDeterministicPlan({
     goal: 'Coordinate an audit-ready finance operations workflow.',
@@ -93,6 +101,10 @@ function normalizePlan(
       0,
       8,
     ),
+    groundingSummary:
+      partialPlan.groundingSummary ??
+      analyzeGroundingData(sourceInput?.groundingData) ??
+      fallback.groundingSummary,
   }
 }
 
@@ -101,6 +113,8 @@ function buildDeterministicPlan(input: MissionRequest): MissionPlan {
   const missionId = `mops-${createdAt.getTime().toString(36)}`
   const title = titleFromGoal(input.goal)
   const windowPrefix = input.urgency === 'critical' ? 'T+' : 'Day '
+  const groundingSummary = analyzeGroundingData(input.groundingData)
+  const hasGroundingAnomalies = groundingSummary.anomalies.length > 0
 
   const stages: MissionStage[] = [
     {
@@ -148,6 +162,18 @@ function buildDeterministicPlan(input: MissionRequest): MissionPlan {
       exitCriteria: 'Reports sent and archived for review',
     },
   ]
+
+  if (hasGroundingAnomalies) {
+    stages.splice(2, 0, {
+      id: 'grounding-risk',
+      name: 'Validate dirty source data',
+      objective:
+        'Review malformed rows, material values, and truncation summaries before any downstream GitLab work is treated as audit evidence.',
+      window: input.urgency === 'critical' ? 'T+2-4h' : `${windowPrefix}1`,
+      owner: 'Finance systems',
+      exitCriteria: 'Every high-severity anomaly has an owner and evidence link',
+    })
+  }
 
   const issues: GitLabIssueDraft[] = [
     {
@@ -248,6 +274,20 @@ function buildDeterministicPlan(input: MissionRequest): MissionPlan {
     },
   ]
 
+  if (hasGroundingAnomalies) {
+    controls.unshift({
+      name: 'Grounding anomaly review',
+      owner: 'Finance systems analyst',
+      evidence: groundingSummary.anomalies
+        .slice(0, 3)
+        .map((anomaly) => anomaly.message)
+        .join(' | '),
+      risk: groundingSummary.anomalies.some((anomaly) => anomaly.severity === 'High')
+        ? 'High'
+        : 'Medium',
+    })
+  }
+
   const mcpActions: McpActionDraft[] = [
     {
       tool: 'list_tools',
@@ -274,12 +314,18 @@ function buildDeterministicPlan(input: MissionRequest): MissionPlan {
   return {
     missionId,
     title,
-    executiveBrief: `${input.goal} MissionOps converts it into ${issues.length} accountable GitLab work items, ${reports.length} report outputs, and ${controls.length} control checks with human approval gates.`,
+    executiveBrief: `${input.goal} MissionOps converts it into ${issues.length} accountable GitLab work items, ${reports.length} report outputs, and ${controls.length} control checks with human approval gates.${hasGroundingAnomalies ? ` Grounding review found ${groundingSummary.anomalies.length} anomaly signals before execution.` : ''}`,
     createdAt: createdAt.toISOString(),
     agentMode: 'deterministic',
     geminiModel: 'deterministic-demo',
-    riskScore:
-      input.urgency === 'critical' ? 88 : input.urgency === 'accelerated' ? 76 : 62,
+    riskScore: Math.min(
+      100,
+      (input.urgency === 'critical'
+        ? 88
+        : input.urgency === 'accelerated'
+          ? 76
+          : 62) + groundingRiskAdjustment(groundingSummary),
+    ),
     confidence: input.approvalMode === 'auto_draft' ? 0.8 : 0.88,
     timeSavedHours: input.urgency === 'critical' ? 26 : 18,
     stages,
@@ -289,11 +335,13 @@ function buildDeterministicPlan(input: MissionRequest): MissionPlan {
     mcpActions,
     agentTrace: [
       'Parsed mission goal and extracted operational constraints',
+      groundingPromptDigest(groundingSummary),
       'Selected GitLab MCP as the execution system of record',
       'Created staged plan with human approval boundaries',
       'Drafted issues, labels, reports, and audit controls',
       'Prepared MCP tool calls for approved execution',
     ],
+    groundingSummary,
   }
 }
 

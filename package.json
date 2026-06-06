@@ -18,6 +18,7 @@
     "test:e2e": "playwright test",
     "test:e2e:hosted": "PLAYWRIGHT_BASE_URL=https://missionops-agent.netlify.app playwright test --workers=1",
     "record:demo": "tsx scripts/record-demo.ts",
+    "audit:secrets": "git grep -nE '(AIza[0-9A-Za-z_-]{20,}|glpat-[0-9A-Za-z_-]{20,}|gh[pousr]_[0-9A-Za-z_]{30,}|-----BEGIN (RSA |EC |OPENSSH |PRIVATE )?PRIVATE KEY-----)' -- . ':!package-lock.json' && exit 1 || exit 0",
     "check": "npm run lint && npm run test && npm run build",
     "verify:submission": "npm run check && npm run test:e2e"
   },

@@ -1,5 +1,7 @@
 import type { Handler } from '@netlify/functions'
 import type { MissionPlan } from '../../src/shared/mission'
+import { validateExecutionApproval } from '../../server/approval'
+import { auditLog } from '../../server/auditLog'
 import { executeGitLabMission } from '../../server/gitlabMcp'
 import { createMissionPlan, missionRequestSchema } from '../../server/missionAgent'
 
@@ -24,16 +26,46 @@ export const handler: Handler = async (event) => {
     }
 
     const plan = await createMissionPlan(parsed.data)
+    auditLog('mission_plan_created', {
+      missionId: plan.missionId,
+      mode: plan.agentMode,
+      riskScore: plan.riskScore,
+      issues: plan.gitlabIssues.length,
+      anomalies: plan.groundingSummary.anomalies.length,
+    })
     return json(200, { plan })
   }
 
   if (event.httpMethod === 'POST' && path === '/mission/execute') {
-    const parsedBody = parseBody(event.body) as { plan?: MissionPlan }
+    const parsedBody = parseBody(event.body) as { plan?: MissionPlan; approval?: unknown }
     if (!parsedBody.plan?.missionId || !Array.isArray(parsedBody.plan.gitlabIssues)) {
       return json(400, { error: 'Mission plan is required' })
     }
 
+    const approvalError = validateExecutionApproval(
+      parsedBody.plan,
+      parsedBody.approval,
+    )
+    if (approvalError) {
+      auditLog('mission_execution_blocked', {
+        missionId: parsedBody.plan.missionId,
+        reason: approvalError,
+      })
+      return json(403, { error: approvalError })
+    }
+
+    auditLog('mission_execution_started', {
+      missionId: parsedBody.plan.missionId,
+      issues: parsedBody.plan.gitlabIssues.length,
+    })
     const execution = await executeGitLabMission(parsedBody.plan)
+    auditLog('mission_execution_completed', {
+      missionId: parsedBody.plan.missionId,
+      mode: execution.mode,
+      failedActions: execution.actions.filter((action) => action.status === 'failed')
+        .length,
+      totalActions: execution.actions.length,
+    })
     return json(200, { execution })
   }
 

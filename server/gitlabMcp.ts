@@ -34,7 +34,10 @@ export async function executeGitLabMission(
   }
 
   try {
-    const actions = await executeLiveMcp(plan, command)
+    const actions = await withTimeout(
+      executeLiveMcp(plan, command),
+      Number(process.env.GITLAB_MCP_TIMEOUT_MS ?? 15_000),
+    )
     return {
       missionId: plan.missionId,
       mode: 'Live GitLab MCP',
@@ -61,6 +64,21 @@ export async function executeGitLabMission(
         ...simulateActions(plan).slice(0, 4),
       ],
     }
+  }
+}
+
+async function withTimeout<T>(promise: Promise<T>, timeoutMs: number): Promise<T> {
+  let timeout: NodeJS.Timeout | undefined
+  const timeoutPromise = new Promise<never>((_resolve, reject) => {
+    timeout = setTimeout(() => {
+      reject(new Error(`GitLab MCP execution timed out after ${timeoutMs}ms`))
+    }, timeoutMs)
+  })
+
+  try {
+    return await Promise.race([promise, timeoutPromise])
+  } finally {
+    if (timeout) clearTimeout(timeout)
   }
 }
 

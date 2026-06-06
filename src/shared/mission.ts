@@ -19,6 +19,37 @@ export type MissionRequest = {
   approvalMode: ApprovalMode
   dataSources: DataSource[]
   constraints: string[]
+  groundingData?: GroundingDataFile[]
+}
+
+export type GroundingDataFile = {
+  name: string
+  kind: 'GL spreadsheet' | 'ERP export' | 'Payments ledger' | 'CSV'
+  content: string
+}
+
+export type GroundingAnomaly = {
+  id: string
+  severity: 'Low' | 'Medium' | 'High'
+  source: string
+  rowNumber?: number
+  message: string
+}
+
+export type GroundingSummary = {
+  filesAnalyzed: number
+  totalRows: number
+  processedRows: number
+  truncatedRows: number
+  anomalies: GroundingAnomaly[]
+}
+
+export type ExecutionApproval = {
+  missionId: string
+  confirmed: true
+  approvedBy: string
+  approvedAt: string
+  approvalText: 'APPROVE_SYNC'
 }
 
 export type MissionStage = {
@@ -74,6 +105,7 @@ export type MissionPlan = {
   controls: ControlItem[]
   mcpActions: McpActionDraft[]
   agentTrace: string[]
+  groundingSummary: GroundingSummary
 }
 
 export type McpActionResult = {

@@ -3,8 +3,10 @@ import { existsSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import type { MissionPlan } from '../src/shared/mission'
+import { auditLog } from './auditLog'
 import { executeGitLabMission } from './gitlabMcp'
 import { createMissionPlan, missionRequestSchema } from './missionAgent'
+import { validateExecutionApproval } from './approval'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const distDir = join(__dirname, '..', 'dist')
@@ -31,6 +33,13 @@ app.post('/api/mission/plan', async (request: Request, response: Response) => {
   }
 
   const plan = await createMissionPlan(parsed.data)
+  auditLog('mission_plan_created', {
+    missionId: plan.missionId,
+    mode: plan.agentMode,
+    riskScore: plan.riskScore,
+    issues: plan.gitlabIssues.length,
+    anomalies: plan.groundingSummary.anomalies.length,
+  })
   response.json({ plan })
 })
 
@@ -41,7 +50,28 @@ app.post('/api/mission/execute', async (request: Request, response: Response) =>
     return
   }
 
+  const approvalError = validateExecutionApproval(plan, request.body?.approval)
+  if (approvalError) {
+    auditLog('mission_execution_blocked', {
+      missionId: plan.missionId,
+      reason: approvalError,
+    })
+    response.status(403).json({ error: approvalError })
+    return
+  }
+
+  auditLog('mission_execution_started', {
+    missionId: plan.missionId,
+    issues: plan.gitlabIssues.length,
+  })
   const execution = await executeGitLabMission(plan)
+  auditLog('mission_execution_completed', {
+    missionId: plan.missionId,
+    mode: execution.mode,
+    failedActions: execution.actions.filter((action) => action.status === 'failed')
+      .length,
+    totalActions: execution.actions.length,
+  })
   response.json({ execution })
 })
 

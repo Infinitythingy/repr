@@ -22,6 +22,7 @@ import {
   defaultMissionRequest,
   missionPresets,
   type DataSource,
+  type ExecutionApproval,
   type McpExecutionLog,
   type MissionPlan,
   type MissionRequest,
@@ -121,7 +122,16 @@ function App() {
       const response = await fetch('/api/mission/execute', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ plan }),
+        body: JSON.stringify({
+          plan,
+          approval: {
+            missionId: plan.missionId,
+            confirmed: true,
+            approvedBy: 'MissionOps operator',
+            approvedAt: new Date().toISOString(),
+            approvalText: 'APPROVE_SYNC',
+          } satisfies ExecutionApproval,
+        }),
       })
       if (!response.ok) {
         const body = (await response.json().catch(() => ({}))) as ApiError
@@ -284,9 +294,7 @@ function App() {
             <div className="status-strip" aria-label="Agent status">
               <span>
                 <Activity size={15} aria-hidden="true" />
-                {plan?.agentMode === 'gemini'
-                  ? 'Gemini 3'
-                  : 'Demo reasoning'}
+                {plan?.agentMode === 'gemini' ? 'Gemini 3' : 'Demo reasoning'}
               </span>
               <span>
                 <GitPullRequest size={15} aria-hidden="true" />
@@ -294,7 +302,7 @@ function App() {
               </span>
               <span>
                 <ShieldCheck size={15} aria-hidden="true" />
-                Human approved
+                {execution ? 'Human approved' : 'Approval required'}
               </span>
             </div>
           </header>
@@ -408,6 +416,38 @@ function App() {
                 ))}
               </div>
             </article>
+
+            {plan?.groundingSummary.filesAnalyzed ? (
+              <article className="panel">
+                <div className="panel-heading">
+                  <Activity size={18} aria-hidden="true" />
+                  <h3>Grounding Data</h3>
+                </div>
+                <div className="report-stack">
+                  <div className="report-row">
+                    <span>{plan.groundingSummary.anomalies.length}</span>
+                    <div>
+                      <h4>Anomaly signals</h4>
+                      <p>
+                        {plan.groundingSummary.processedRows}/
+                        {plan.groundingSummary.totalRows} rows processed;
+                        {' '}
+                        {plan.groundingSummary.truncatedRows} rows summarized.
+                      </p>
+                    </div>
+                  </div>
+                  {plan.groundingSummary.anomalies.slice(0, 3).map((anomaly) => (
+                    <div className="report-row" key={anomaly.id}>
+                      <span>{anomaly.severity}</span>
+                      <div>
+                        <h4>{anomaly.source}</h4>
+                        <p>{anomaly.message}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </article>
+            ) : null}
 
             <article className="panel">
               <div className="panel-heading">

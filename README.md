@@ -78,6 +78,7 @@ npm run lint
 npm run test
 npm run build
 npm run test:e2e
+npm run audit:secrets
 ```
 
 The Playwright suite covers both desktop and mobile Chromium.
@@ -101,6 +102,7 @@ npm run verify:submission
 - Requirement evidence map: `docs/rubric-map.md`
 - Live GitLab MCP setup: `docs/live-gitlab-mcp.md`
 - Final checklist: `docs/submission-checklist.md`
+- Backend testing report: `docs/backend-testing-report.md`
 
 ## Hosting
 
