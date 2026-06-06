@@ -4,6 +4,12 @@ MissionOps is a submit-ready Google Cloud Rapid Agent Hackathon project for the 
 
 The app is intentionally more than chat: it plans a multi-step mission, waits for human approval, then executes through a GitLab MCP action layer. It runs locally in demo mode without private credentials and can switch to live Gemini + GitLab MCP mode through environment variables.
 
+## Submission URLs
+
+- Hosted app: https://missionops-agent.netlify.app
+- Public source: https://github.com/Infinitythingy/repr
+- Netlify project: https://app.netlify.com/projects/missionops-agent
+
 ## Why This Track
 
 GitLab is the strongest fit for this build because the requested agent generates workflows, tickets, and reports for finance/operations teams. GitLab MCP gives the agent a meaningful system of action: issues, labels, milestones, ownership, due dates, and execution history.
@@ -84,6 +90,7 @@ npm run verify:submission
 ## Submission Assets
 
 - App source: this repository
+- Hosted app: https://missionops-agent.netlify.app
 - License: `LICENSE`
 - Agent Builder manifest: `agent/agent-builder-manifest.json`
 - Demo script: `docs/demo-script.md`

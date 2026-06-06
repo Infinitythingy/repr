@@ -15,7 +15,8 @@
 - Tagline: use `docs/devpost-submission.md`
 - Description: use the "What It Does" and "How We Built It" sections
 - Source code URL: public repository URL
-- Hosted app URL: Cloud Run, Node host, or confirmed Netlify deployment URL
+- Hosted app URL: `https://missionops-agent.netlify.app`
+- Source code URL: `https://github.com/Infinitythingy/repr`
 - Demo video URL: public or unlisted video link
 - License: MIT
 
