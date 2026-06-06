@@ -17,6 +17,7 @@ Additional hosted and manual checks run during this audit:
 
 ```bash
 npm run audit:secrets
+git log --all -p -- . ':!package-lock.json' | grep -E '<secret-patterns>'
 gh repo view Infinitythingy/repr --json nameWithOwner,isPrivate,url,licenseInfo
 curl https://missionops-agent.netlify.app/api/health
 ```
@@ -41,7 +42,7 @@ What still requires your real account:
 
 ## 2. Grounding Data Anomalies Test
 
-Status: **Passed locally**
+Status: **Passed locally and hosted**
 
 Evidence:
 
@@ -50,9 +51,14 @@ Evidence:
 
 Corrupted GL data with a large negative revenue row and malformed row is flagged. The plan does not crash or ignore the data; it adds anomaly details, raises risk, and adds a grounding control.
 
+Hosted evidence after Netlify redeploy:
+
+- Corrupted GL payload returned 4 anomaly signals.
+- Hosted risk score increased to 100 for the material negative revenue scenario.
+
 ## 3. No-Approval Block
 
-Status: **Passed locally**
+Status: **Passed locally and hosted**
 
 Evidence:
 
@@ -69,6 +75,11 @@ Direct POST to execute without an explicit approval payload now returns `403`. T
   "approvalText": "APPROVE_SYNC"
 }
 ```
+
+Hosted evidence:
+
+- Direct hosted POST without approval returned `403`.
+- Hosted POST with approval returned `200` and simulated MCP actions.
 
 ## 4. API Error Handling & Timeout Recovery
 
@@ -112,7 +123,7 @@ npm run audit:secrets
 
 ## 7. Secrets and Token Sweep
 
-Status: **Passed locally**
+Status: **Passed locally, including current tree and git history**
 
 Evidence:
 
