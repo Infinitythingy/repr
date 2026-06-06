@@ -8,6 +8,7 @@ The app is intentionally more than chat: it plans a multi-step mission, waits fo
 
 - Hosted app: https://missionops-agent.netlify.app
 - Public source: https://github.com/Infinitythingy/repr
+- Demo video: https://missionops-agent.netlify.app/missionops-demo.webm
 - Netlify project: https://app.netlify.com/projects/missionops-agent
 
 ## Why This Track
@@ -91,6 +92,7 @@ npm run verify:submission
 
 - App source: this repository
 - Hosted app: https://missionops-agent.netlify.app
+- Demo video: https://missionops-agent.netlify.app/missionops-demo.webm
 - License: `LICENSE`
 - Agent Builder manifest: `agent/agent-builder-manifest.json`
 - Demo script: `docs/demo-script.md`

@@ -17,7 +17,7 @@
 - Source code URL: public repository URL
 - Hosted app URL: `https://missionops-agent.netlify.app`
 - Source code URL: `https://github.com/Infinitythingy/repr`
-- Demo video URL: public or unlisted video link
+- Demo video URL: `https://missionops-agent.netlify.app/missionops-demo.webm`
 - License: MIT
 
 ## Required Artifacts

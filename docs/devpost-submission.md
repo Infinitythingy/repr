@@ -4,6 +4,12 @@
 
 MissionOps Agent
 
+## Submission URLs
+
+- Hosted app: https://missionops-agent.netlify.app
+- Source code: https://github.com/Infinitythingy/repr
+- Demo video: https://missionops-agent.netlify.app/missionops-demo.webm
+
 ## Tagline
 
 Gemini-powered finance operations agent that turns messy business missions into approved GitLab execution plans.
